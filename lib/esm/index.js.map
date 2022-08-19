@@ -1,0 +1,1 @@
+{"version":3,"file":"index.js","names":[],"sources":["../../src/index.ts"],"sourcesContent":["import ReferenceRegistry from './ReferenceRegistry'\r\nimport {findReferenceRegistry} from './functions'\r\n\r\nexport {\r\n    ReferenceRegistry,\r\n    findReferenceRegistry\r\n}"],"mappings":";;;;;;;;;;;;;;;;;;AAAA;;AACA"}

@@ -1,0 +1,4 @@
+@prefix dot: <https://w3id.org/dot#> .
+
+<http://localhost:5000/office1/damages#wall123> dot:hasDamage <http://localhost:5000/office1/damages#damage1> .
+<http://localhost:5000/office1/damages#damage1> a dot:Damage .

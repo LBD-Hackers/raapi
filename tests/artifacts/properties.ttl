@@ -1,0 +1,1 @@
+<http://localhost:5000/office2/instances#wallInstance1> <http://example.org/props/hasUValue> "0.4 W/m2K" .
