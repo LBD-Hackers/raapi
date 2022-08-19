@@ -1,0 +1,2 @@
+# Reference Aggregation API (raapi)
+The Reference Aggregation API for the ConSolid Ecosystem is the second interaction layer to work with a discovery-focused Solid server (i.e. the Server exposes a SPARQL endpoint), based on the [Dataset Aggregation API (daapi)](https://github.com/LBD-Hackers/daapi), which is the first layer. Its development is part of the ConSolid Project.
