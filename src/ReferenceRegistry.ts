@@ -176,15 +176,11 @@ export default class ReferenceRegistry {
             <${sat.alias}> <${DCAT.dataset}> ?ds .
             ?ds a <${CONSOLID.ReferenceRegistry}> ;
             <${DCAT.distribution}>/<${DCAT.downloadURL}> ?ref .
-            GRAPH ?ref {
                 ?concept a <${CONSOLID.Concept}> ;
-                    <${CONSOLID.aggregates}> ?reference .
+                    <${CONSOLID.aggregates}> ?reference, ?aggr .
                 ?reference <${CONSOLID.hasIdentifier}> ?id .
                 ?id <${CONSOLID.inDocument}> <${activeDocument}>;
                     <https://schema.org/value> "${selectedElement}".
-                    OPTIONAL {?concept <${CONSOLID.aggregates}> ?aggr .
-                        FILTER(?reference != ?aggr)}    
-            }
             ?meta <${DCAT.distribution}>/<${DCAT.downloadURL}> <${activeDocument}> .
         }`
         const results = await engine.queryBindings(q, { sources: [sat.satellite] })
