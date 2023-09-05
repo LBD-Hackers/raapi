@@ -1,4 +1,4 @@
-import {AccessService, DataService, Catalog, LBDS, getRoot, getSatelliteFromLdpResource} from 'consolid-daapi'
+import {AccessService, DataService, Catalog, CONSOLID, getRoot, getSatelliteFromLdpResource} from 'consolid-daapi'
 import { QueryEngine } from '@comunica/query-sparql'
 import { ACL, DCAT, DCTERMS, FOAF, RDFS, LDP, RDF } from "@inrupt/vocab-common-rdf";
 import { Session as BrowserSession } from "@inrupt/solid-client-authn-browser";
@@ -47,7 +47,7 @@ export default class ReferenceRegistry {
     this.datasetUrl = root + v4()
     this.parent = parent
     const metadata = new Catalog(this.session, this.datasetUrl)
-    await metadata.create(makePublic, [{predicate: RDF.type, object: LBDS.ReferenceRegistry}])
+    await metadata.create(makePublic, [{predicate: RDF.type, object: CONSOLID.ReferenceRegistry}])
     await metadata.addDistribution(this.url)
     await parent.addDataset(this.datasetUrl)
     await metadata.dataService.writeFileToPod(Buffer.from(''), this.url, makePublic, "text/turtle")
@@ -60,10 +60,10 @@ export default class ReferenceRegistry {
   //   PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
   //   PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
   //   SELECT ?ref ?document ?ds ?value WHERE {
-  //       <${concept}> <${LBDS.aggregates}> ?ref .
+  //       <${concept}> <${CONSOLID.aggregates}> ?ref .
   //       OPTIONAL {
-  //         ?ref <${LBDS.hasIdentifier}> ?id .
-  //         ?id <${LBDS.inDocument}> ?document ;
+  //         ?ref <${CONSOLID.hasIdentifier}> ?id .
+  //         ?id <${CONSOLID.inDocument}> ?document ;
   //           <https://schema.org/value> ?value .
   //         ?ds dcat:distribution/dcat:downloadURL ?document .
   //     }
@@ -107,7 +107,7 @@ export default class ReferenceRegistry {
 
   public async createConcept(concept = this.url + "#" + v4()) {
     let query = `INSERT DATA {
-      <${concept}> a <${LBDS.Concept}> .
+      <${concept}> a <${CONSOLID.Concept}> .
     }`
     await this.update(query)
     return concept
@@ -115,7 +115,7 @@ export default class ReferenceRegistry {
 
   public async registerAggregatedConcept(concept, aggregatedConcept) {
     let query = `INSERT DATA {
-      <${concept}> <${LBDS.aggregates}> <${aggregatedConcept}> .
+      <${concept}> <${CONSOLID.aggregates}> <${aggregatedConcept}> .
     }`
     await this.update(query)
   }
@@ -126,11 +126,11 @@ export default class ReferenceRegistry {
     const now = new Date()
 
     let query = `INSERT DATA {
-      <${concept}> <${LBDS.aggregates}> <${reference}> .
+      <${concept}> <${CONSOLID.aggregates}> <${reference}> .
       <${reference}> <${DCTERMS.created}> "${now}";
-        <${LBDS.hasIdentifier}> <${id}> .
+        <${CONSOLID.hasIdentifier}> <${id}> .
       <${id}> <https://schema.org/value> "${identifier}" ;
-        <${LBDS.inDocument}> <${document}> .
+        <${CONSOLID.inDocument}> <${document}> .
     }`
    
     await this.update(query)
@@ -139,7 +139,7 @@ export default class ReferenceRegistry {
 
   public async deleteReference(reference) {
     const query = `DELETE WHERE {
-    ?concept <${LBDS.aggregates}> <${reference}> .
+    ?concept <${CONSOLID.aggregates}> <${reference}> .
       <${reference}> ?p ?o .
       ?o ?predicate ?object .
   }`
@@ -149,7 +149,7 @@ export default class ReferenceRegistry {
   public async deleteConcept(concept) {
     console.log('concept', concept)
     const query = `DELETE WHERE {
-    <${concept}> a <${LBDS.Concept}> .
+    <${concept}> a <${CONSOLID.Concept}> .
       ?concept ?b ?c .
       ?c ?p ?o .
       ?o ?predicate ?object .
@@ -157,7 +157,7 @@ export default class ReferenceRegistry {
     await this.update(query)
 
     const orphanConcept = `DELETE WHERE {
-      <${concept}> a <${LBDS.Concept}> .
+      <${concept}> a <${CONSOLID.Concept}> .
     }`
       await this.update(orphanConcept)
   }
@@ -174,17 +174,13 @@ export default class ReferenceRegistry {
     for (const sat of endpoints) {
         const q = `SELECT * WHERE {
             <${sat.alias}> <${DCAT.dataset}> ?ds .
-            ?ds a <${LBDS.ReferenceRegistry}> ;
+            ?ds a <${CONSOLID.ReferenceRegistry}> ;
             <${DCAT.distribution}>/<${DCAT.downloadURL}> ?ref .
-            GRAPH ?ref {
-                ?concept a <${LBDS.Concept}> ;
-                    <${LBDS.aggregates}> ?reference .
-                ?reference <${LBDS.hasIdentifier}> ?id .
-                ?id <${LBDS.inDocument}> <${activeDocument}>;
+                ?concept a <${CONSOLID.Concept}> ;
+                    <${CONSOLID.aggregates}> ?reference, ?aggr .
+                ?reference <${CONSOLID.hasIdentifier}> ?id .
+                ?id <${CONSOLID.inDocument}> <${activeDocument}>;
                     <https://schema.org/value> "${selectedElement}".
-                    OPTIONAL {?concept <${LBDS.aggregates}> ?aggr .
-                        FILTER(?reference != ?aggr)}    
-            }
             ?meta <${DCAT.distribution}>/<${DCAT.downloadURL}> <${activeDocument}> .
         }`
         const results = await engine.queryBindings(q, { sources: [sat.satellite] })
@@ -211,10 +207,10 @@ export default class ReferenceRegistry {
     for (const alias of aliases) {
         const sparql = await getSatelliteFromLdpResource(alias)
         const q = `SELECT * WHERE {
-            <${alias}> a <${LBDS.Concept}> ;
-                    <${LBDS.aggregates}> ?reference .
-                ?reference <${LBDS.hasIdentifier}> ?id .
-                ?id <${LBDS.inDocument}> ?doc;
+            <${alias}> a <${CONSOLID.Concept}> ;
+                    <${CONSOLID.aggregates}> ?reference .
+                ?reference <${CONSOLID.hasIdentifier}> ?id .
+                ?id <${CONSOLID.inDocument}> ?doc;
                     <https://schema.org/value> ?identifier.
                 
             ?meta <${DCAT.distribution}>/<${DCAT.downloadURL}> ?doc .

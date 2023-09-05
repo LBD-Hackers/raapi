@@ -1,5 +1,5 @@
 const {QueryEngine} = require('@comunica/query-sparql')
-const {getSatelliteFromLdpResource, LBDS} = require('consolid-daapi')
+const {getSatelliteFromLdpResource, CONSOLID} = require('consolid-daapi')
 const {DCAT} = require('@inrupt/vocab-common-rdf')
 
 export async function findReferenceRegistry(projectUrl) {
@@ -9,7 +9,7 @@ export async function findReferenceRegistry(projectUrl) {
     const q = `
     SELECT ?refReg WHERE {
         <${projectUrl}> <${DCAT.dataset}> ?ds .
-        ?ds a <${LBDS.ReferenceRegistry}> ;
+        ?ds a <${CONSOLID.ReferenceRegistry}> ;
             <${DCAT.distribution}>/<${DCAT.downloadURL}> ?refReg.
     } LIMIT 1`
 

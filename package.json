@@ -1,6 +1,6 @@
 {
   "name": "consolid-raapi",
-  "version": "0.0.3",
+  "version": "0.0.9",
   "description": "",
   "main": "lib/esm/index.js",
   "module": "lib/esm/index.js",
@@ -60,7 +60,7 @@
     "@inrupt/solid-client-authn-browser": "^1.11.3",
     "@inrupt/solid-client-authn-node": "^1.11.3",
     "@inrupt/vocab-common-rdf": "^1.0.3",
-    "consolid-daapi": "file:../daapi",
+    "consolid-daapi": "^0.0.7",
     "npm-run-all": "^4.1.5"
   },
   "browser": {
