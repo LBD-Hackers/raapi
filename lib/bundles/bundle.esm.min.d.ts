@@ -29,7 +29,7 @@ declare class ReferenceRegistry {
     create(parent: Catalog, makePublic?: boolean): Promise<void>;
     createConcept(concept?: string): Promise<string>;
     registerAggregatedConcept(concept: any, aggregatedConcept: any): Promise<void>;
-    createReference(concept: any, reference: string, document: any, identifier: any): Promise<string>;
+    createReference(concept: any, reference: string, document: any, identifier: any, conformance: any): Promise<string>;
     deleteReference(reference: any): Promise<void>;
     deleteConcept(concept: any): Promise<void>;
     findConceptByIdentifier(activeDocument: any, selectedElement: any): Promise<any>;

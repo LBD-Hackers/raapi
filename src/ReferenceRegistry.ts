@@ -1,10 +1,11 @@
-import {AccessService, DataService, Catalog, CONSOLID, getRoot, getSatelliteFromLdpResource} from 'consolid-daapi'
+import {AccessService, DataService, Catalog, getRoot, getSatelliteFromLdpResource} from 'consolid-daapi'
 import { QueryEngine } from '@comunica/query-sparql'
 import { ACL, DCAT, DCTERMS, FOAF, RDFS, LDP, RDF } from "@inrupt/vocab-common-rdf";
 import { Session as BrowserSession } from "@inrupt/solid-client-authn-browser";
 import { Session as NodeSession } from "@inrupt/solid-client-authn-node";
 import {v4} from 'uuid'
 import Fetch from 'cross-fetch'
+import CONSOLID from 'consolid-vocabulary';
 
 interface info {
   webId: string,
@@ -64,8 +65,8 @@ export default class ReferenceRegistry {
   //       OPTIONAL {
   //         ?ref <${CONSOLID.hasIdentifier}> ?id .
   //         ?id <${CONSOLID.inDocument}> ?document ;
-  //           <https://schema.org/value> ?value .
-  //         ?ds dcat:distribution/dcat:downloadURL ?document .
+  //           rdf:value ?value .
+  //         ?ds dcat:distribution/dcat:accessURL ?document .
   //     }
   //   }`
   //   const checked:any = new Set()
@@ -107,7 +108,7 @@ export default class ReferenceRegistry {
 
   public async createConcept(concept = this.url + "#" + v4()) {
     let query = `INSERT DATA {
-      <${concept}> a <${CONSOLID.Concept}> .
+      <${concept}> a <${CONSOLID.ReferenceCollection}> .
     }`
     await this.update(query)
     return concept
@@ -120,17 +121,22 @@ export default class ReferenceRegistry {
     await this.update(query)
   }
 
-  public async createReference(concept, reference= getRoot(this.url) + v4(), document, identifier) {
+  public async createReference(concept, reference= getRoot(this.url) + v4(), document, identifier, conformance) {
     const id = getRoot(this.url) + v4() 
 
     const now = new Date()
 
-    let query = `INSERT DATA {
+    let query = `
+    PREFIX oa: <http://www.w3.org/ns/oa#>
+    PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+    PREFIX dct: <http://purl.org/dc/terms/>
+    INSERT DATA {
       <${concept}> <${CONSOLID.aggregates}> <${reference}> .
       <${reference}> <${DCTERMS.created}> "${now}";
-        <${CONSOLID.hasIdentifier}> <${id}> .
-      <${id}> <https://schema.org/value> "${identifier}" ;
-        <${CONSOLID.inDocument}> <${document}> .
+        oa:hasSelector <${id}> ;
+        oa:hasSource <${document}> .
+      <${id}> rdf:value "${identifier}" ;
+        dct:conformsTo "${conformance}" .
     }`
    
     await this.update(query)
@@ -149,7 +155,7 @@ export default class ReferenceRegistry {
   public async deleteConcept(concept) {
     console.log('concept', concept)
     const query = `DELETE WHERE {
-    <${concept}> a <${CONSOLID.Concept}> .
+    <${concept}> a <${CONSOLID.ReferenceCollection}> .
       ?concept ?b ?c .
       ?c ?p ?o .
       ?o ?predicate ?object .
@@ -157,7 +163,7 @@ export default class ReferenceRegistry {
     await this.update(query)
 
     const orphanConcept = `DELETE WHERE {
-      <${concept}> a <${CONSOLID.Concept}> .
+      <${concept}> a <${CONSOLID.ReferenceCollection}> .
     }`
       await this.update(orphanConcept)
   }
@@ -172,16 +178,19 @@ export default class ReferenceRegistry {
     const included = new Set()
     const checked = new Set()
     for (const sat of endpoints) {
-        const q = `SELECT * WHERE {
+        const q = `
+        PREFIX oa: <http://www.w3.org/ns/oa#>
+        PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+        SELECT * WHERE {
             <${sat.alias}> <${DCAT.dataset}> ?ds .
             ?ds a <${CONSOLID.ReferenceRegistry}> ;
-            <${DCAT.distribution}>/<${DCAT.downloadURL}> ?ref .
-                ?concept a <${CONSOLID.Concept}> ;
+            <${DCAT.distribution}>/<${DCAT.accessURL}> ?ref .
+                ?concept a <${CONSOLID.ReferenceCollection}> ;
                     <${CONSOLID.aggregates}> ?reference, ?aggr .
-                ?reference <${CONSOLID.hasIdentifier}> ?id .
-                ?id <${CONSOLID.inDocument}> <${activeDocument}>;
-                    <https://schema.org/value> "${selectedElement}".
-            ?meta <${DCAT.distribution}>/<${DCAT.downloadURL}> <${activeDocument}> .
+                ?reference oa:hasSelector ?id ;
+                  oa:hasSource <${activeDocument}> .
+                ?id rdf:value "${selectedElement}".
+            ?meta <${DCAT.distribution}>/<${DCAT.accessURL}> <${activeDocument}> .
         }`
         const results = await engine.queryBindings(q, { sources: [sat.satellite] })
         const bindings = await results.toArray()
@@ -206,14 +215,17 @@ export default class ReferenceRegistry {
 
     for (const alias of aliases) {
         const sparql = await getSatelliteFromLdpResource(alias)
-        const q = `SELECT * WHERE {
-            <${alias}> a <${CONSOLID.Concept}> ;
+        const q = `
+        PREFIX oa: <http://www.w3.org/ns/oa#>
+        PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+        SELECT * WHERE {
+            <${alias}> a <${CONSOLID.ReferenceCollection}> ;
                     <${CONSOLID.aggregates}> ?reference .
-                ?reference <${CONSOLID.hasIdentifier}> ?id .
-                ?id <${CONSOLID.inDocument}> ?doc;
-                    <https://schema.org/value> ?identifier.
+                ?reference oa:hasSelector ?id ;
+                  oa:hasSource ?doc;
+                ?id rdf:value ?identifier.
                 
-            ?meta <${DCAT.distribution}>/<${DCAT.downloadURL}> ?doc .
+            ?meta <${DCAT.distribution}>/<${DCAT.accessURL}> ?doc .
         }`
         const results = await engine.queryBindings(q, { sources: [sparql] })
         const aliasB = await results.toArray()
